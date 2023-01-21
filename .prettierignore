@@ -1,0 +1,6 @@
+node_modules
+README.MD
+package-lock.json
+package.json
+.prettierignore
+.prettierrc.json
