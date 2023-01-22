@@ -22,7 +22,7 @@ app.ws('/:query', (ws, req) => {
     // Extract query from params
     const query = req.params.query
     
-    ws.on('id', async (msg) => {
+    ws.on('message', async (msg) => {
         // Perform tasks in parallel using Promise.all()
         // Get posts and tweets with the given query and specified length
         console.log(query)
