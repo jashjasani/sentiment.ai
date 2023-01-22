@@ -6,5 +6,5 @@ let redditCreds = JSON.parse(fs.readFileSync('config.json').toString()).redditCr
 //Initialising reddit content
 let reddit = new RedditContent(redditCreds)
 
-let text = await reddit.getPosts({query : "elon musk"})
+let text = await reddit.getPosts("india secular")
 

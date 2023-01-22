@@ -10,20 +10,15 @@ export default class RedditContent {
             password: password,
             username: username,
         })
-        this.getPosts = async (
-            query,
-            type = 'link',
-            limit = 1000,
-            sort = 'new'
-        ) => {
+        this.getPosts = async (query, limit, type, sort) => {
             let posts = await this.r.getSubreddit('all').search({
-                query: 'elon musk',
-                type: 'link',
-                limit: 1000,
-                sort: 'new',
+                query: query,
+                type: type ?? 'link',
+                limit: limit ?? 10,
+                sort: sort ?? 'new',
             })
-            let more = await posts.fetchMore({ amount: 100 })
-            posts = posts.concat(more)
+            // let more = await posts.fetchMore({ amount: 0 })
+            // posts = posts.concat(more)
             posts = posts.map((e) => {
                 let text = ''
                 if (e.title != null) {
@@ -32,7 +27,7 @@ export default class RedditContent {
                 if (e.selftext != null) {
                     text += e.selftext
                 }
-                return text
+                return text.substring(0, 600)
             })
             return posts
         }
