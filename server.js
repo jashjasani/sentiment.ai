@@ -1,44 +1,52 @@
 import express from 'express'
-const app = express()
-import axios from 'axios'
+import expressWs from 'express-ws'
+const app = expressWs(express()).app
 import RedditContent from './utils/reddit.js'
 import Twitter from './utils/twitter.js'
 import Emotions from './utils/modelQuery.js'
 import fs from 'fs'
 
-//Credentials for reddit api from config.json
-let creds = JSON.parse(fs.readFileSync('config.json').toString())
+// Credentials for APIs from config.json
+const creds = JSON.parse(fs.readFileSync('config.json').toString())
 
-//Initialising reddit content
-const reddit = new RedditContent(creds.redditCreds)
-const twitter = new Twitter(creds.twitterCreds)
-const huggingFace = new Emotions(creds.huggingfaceCreds)
+// Initialize clients for each API
+const redditClient = new RedditContent(creds.redditCreds)
+const twitterClient = new Twitter(creds.twitterCreds)
+const modelClient = new Emotions(creds.huggingfaceCreds)
 
 const PORT = 5000
+const LENGTH = 100
 
-app.get('/', (req, res) => {
-    res.statusCode(404).send(
-        "You ae wroung Place, or you havn't passed the query string!!!"
-    )
-})
+// WebSocket route for real-time communication between client and server
+app.ws('/:query', (ws, req) => {
+    // Extract query from params
+    const query = req.params.query
+    
+    ws.on('id', async (msg) => {
+        // Perform tasks in parallel using Promise.all()
+        // Get posts and tweets with the given query and specified length
+        console.log(query)
+        const [redditPosts, twitterPosts] = await Promise.all([
+            redditClient.getPosts(query, LENGTH),
+            twitterClient.getTweets(query, LENGTH),
+        ])
 
-const length = 10
+        // Analyze emotions in the posts and tweets
+        const [redditEmotions, twitterEmotions] = await Promise.all([
+            modelClient.getEmotionsQuery(redditPosts),
+            modelClient.getEmotionsQuery(twitterPosts),
+        ])
 
-app.get('/:query', async (req, res) => {
-    const getQuery = req.params.query
-    // const redditPostsEmotions = await reddit.getPosts(getQuery, length)
-
-    const redditPostsEmotions = await huggingFace.getEmotionsQuery(
-        await reddit.getPosts(getQuery, length)
-    )
-    // const twitterTweetsEmotions = await twitter.getTweets(getQuery, length)
-
-    const twitterTweetsEmotions = await huggingFace.getEmotionsQuery(
-        await twitter.getTweets(getQuery, length)
-    )
-    res.send({ reddit: redditPostsEmotions, twitter: twitterTweetsEmotions })
+        console.log(
+            JSON.stringify({ reddit: redditEmotions, twitter: twitterEmotions })
+        )
+        // Send the emotions analysis results back to the client
+        ws.send(
+            JSON.stringify({ reddit: redditEmotions, twitter: twitterEmotions })
+        )
+    })
 })
 
 app.listen(PORT, () => {
-    console.log('Server Listening to port ' + PORT)
+    console.log(`Server Listening on port ${PORT}`)
 })
