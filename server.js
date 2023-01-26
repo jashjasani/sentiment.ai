@@ -5,6 +5,7 @@ import RedditContent from './utils/reddit.js'
 import Twitter from './utils/twitter.js'
 import Emotions from './utils/modelQuery.js'
 import fs from 'fs'
+import { log } from 'console'
 
 // Credentials for APIs from config.json
 const creds = JSON.parse(fs.readFileSync('config.json').toString())
@@ -12,35 +13,56 @@ const creds = JSON.parse(fs.readFileSync('config.json').toString())
 // Initialize clients for each API
 const redditClient = new RedditContent(creds.redditCreds)
 const twitterClient = new Twitter(creds.twitterCreds)
-const modelClient = new Emotions(creds.huggingfaceCreds)
+const modelClientReddit = new Emotions(creds.openAiCreds)
+const modelClientTwitter = new Emotions(creds.openAiCreds)
 
 const PORT = 5000
-const LENGTH = 100
+const LENGTH = 10
 
 // WebSocket route for real-time communication between client and server
 app.ws('/:query', (ws, req) => {
     // Extract query from params
     const query = req.params.query
-    
+
     ws.on('message', async (msg) => {
         // Perform tasks in parallel using Promise.all()
         // Get posts and tweets with the given query and specified length
-        console.log(query)
+        // console.log(query)
         const [redditPosts, twitterPosts] = await Promise.all([
             redditClient.getPosts(query, LENGTH),
             twitterClient.getTweets(query, LENGTH),
         ])
-
+        var redditEmotions
+        var twitterEmotions
         // Analyze emotions in the posts and tweets
-        const [redditEmotions, twitterEmotions] = await Promise.all([
-            modelClient.getEmotionsQuery(redditPosts),
-            modelClient.getEmotionsQuery(twitterPosts),
-        ])
+        try {
+            ;[redditEmotions, twitterEmotions] = await Promise.all([
+                (redditEmotions = await modelClientReddit.runCompletion(
+                    redditPosts
+                )),
+                (twitterEmotions = await modelClientTwitter.runCompletion(
+                    twitterPosts
+                )),
+            ])
+        } catch (error) {
+            console.log(error)
+            console.log('retrying')
+            setTimeout(async () => {
+                [redditEmotions, twitterEmotions] = await Promise.all([
+                    (redditEmotions = await modelClientReddit.runCompletion(
+                        redditPosts
+                    )),
+                    (twitterEmotions = await modelClientTwitter.runCompletion(
+                        twitterPosts
+                    )),
+                ])
+            }, 20000)
+        }
 
-        console.log(
-            JSON.stringify({ reddit: redditEmotions, twitter: twitterEmotions })
-        )
-        // Send the emotions analysis results back to the client
+        // console.log(
+        //     JSON.stringify({ reddit: redditEmotions, twitter: twitterEmotions })
+        // )
+        // // Send the emotions analysis results back to the client
         ws.send(
             JSON.stringify({ reddit: redditEmotions, twitter: twitterEmotions })
         )
