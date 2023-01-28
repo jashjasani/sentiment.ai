@@ -1,5 +1,4 @@
 import Snoowrap from 'snoowrap'
-import fs from 'fs'
 
 export default class RedditContent {
     constructor({ clientId, clientSecret, userAgent, password, username }) {
@@ -27,7 +26,7 @@ export default class RedditContent {
                 if (e.selftext != null) {
                     text += e.selftext
                 }
-                return text.substring(0, 600)
+                return text.substring(0, 200)
             })
             return posts
         }

@@ -87,7 +87,7 @@ export default class Emotions {
             // surprise,
             // neutral] for the following:
 
-            prompt: `Analyse the top 3 emotions only from  [disappointment,
+            prompt: `Analyse the top 2 emotion only from  [disappointment,
             excitement,
             admiration,
             joy,
@@ -195,7 +195,7 @@ export default class Emotions {
         //     }})
 
         Object.keys(report).forEach((element) => {
-            report[element] = (report[element] / total) * 100
+            report[element] = ((report[element] / total) * 100).toFixed(2)
         })
 
         console.log(total)
