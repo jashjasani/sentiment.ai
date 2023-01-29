@@ -2,7 +2,6 @@ import axios from 'axios'
 
 export default class Twitter {
     constructor(twitterAuthToken) {
-        this.twitterAuthToken = twitterAuthToken
         this.getTweets = async (word, length) => {
             const headers = {
                 Authorization: this.twitterAuthToken,
