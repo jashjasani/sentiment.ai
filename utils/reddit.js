@@ -26,7 +26,7 @@ export default class RedditContent {
                 if (e.selftext != null) {
                     text += e.selftext
                 }
-                return text.substring(0, 200)
+                return text.substring(0, 100)
             })
             return posts
         }

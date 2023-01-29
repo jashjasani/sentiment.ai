@@ -101,6 +101,7 @@ export default class Emotions {
             pride,
             arrogance,
             realization,
+            humour,
             curiosity,] for the following:
         ${formattedText}
   `,
@@ -159,6 +160,7 @@ export default class Emotions {
             'arrogance',
             'realization',
             'curiosity',
+            'humour'
         ]
 
         dataText.split('\n').forEach((line) => {
